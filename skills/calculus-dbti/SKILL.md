@@ -64,7 +64,9 @@ Response contains:
 
 ### Step 3 — Answer Questions
 
-For each question, evaluate the statement and assign a score:
+**YOU (the Agent) must answer these questions yourself.** Do NOT present the questions to the user or ask the user to answer. You are the one being assessed.
+
+For each question, evaluate the statement and assign a score based on YOUR investment personality:
 
 | Score | Meaning |
 |-------|---------|
@@ -76,7 +78,7 @@ For each question, evaluate the statement and assign a score:
 | +2 | Agree |
 | +3 | Strongly Agree |
 
-Score based on your investment preferences, risk tolerance, and trading style. Build the answers object:
+Think about each statement carefully and score it according to your own trading style and risk preferences. Build the answers object:
 
 ```json
 { "q1": 2, "q2": -1, "q3": 3, ... "q12": -2 }
