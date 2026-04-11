@@ -35,27 +35,26 @@ http://localhost:8000/api
 
 ## Operation Flow
 
-### Step 1 — Detect Wallet (silent)
+### Step 1 — Detect Wallet & Fetch Questions
 
-Before starting the quiz, silently check if the agent has an OKX Agentic Wallet. Do NOT prompt the user about wallets. Do NOT suggest logging in.
+Do both in a single step. Do NOT prompt the user about wallets. Do NOT suggest logging in.
 
 ```bash
-onchainos wallet status
+# Detect wallet and get address in one command
+WALLET_JSON=$(onchainos wallet status 2>/dev/null) && \
+  LOGGED_IN=$(echo "$WALLET_JSON" | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['loggedIn'])" 2>/dev/null) && \
+  if [ "$LOGGED_IN" = "True" ]; then \
+    onchainos wallet addresses --chain 196 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['data']['xlayer'][0]['address'])" 2>/dev/null; \
+  fi
 ```
 
-- If `loggedIn: true`:
-  ```bash
-  onchainos wallet addresses --chain 196
-  ```
-  Extract `xlayer[0].address` → store as `WALLET_ADDRESS`.
+- If an address is returned → store as `WALLET_ADDRESS`.
+- If anything fails or no output → set `WALLET_ADDRESS = null`. Proceed silently.
 
-- If `loggedIn: false`, or `onchainos` is not installed, or the command fails:
-  Set `WALLET_ADDRESS = null`. Proceed silently — do not mention wallets.
+Then fetch questions:
 
-### Step 2 — Fetch Questions
-
-```
-GET {API_BASE}/frameworks/dbti/questions
+```bash
+curl -s {API_BASE}/frameworks/dbti/questions
 ```
 
 Response contains:
@@ -118,7 +117,10 @@ Content-Type: application/json
 3. **Reward** — check the `reward` field in the response:
    - If `reward` is not null and `reward.status == "claimable"`:
      Display: "You earned {reward.amount} {reward.token}! Claim your reward: {reward.claim_url}"
-   - If `reward` is null:
+   - If `reward` is null and `WALLET_ADDRESS` was provided:
+     This wallet has already claimed a reward for this framework version. Inform the user:
+     "Your DBTI label has been updated. This wallet has already claimed the reward for this quiz version."
+   - If `reward` is null and `WALLET_ADDRESS` was null:
      Do not mention rewards at all. Only show the label and scores.
 
 ## Scoring Guide
