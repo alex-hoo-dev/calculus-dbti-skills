@@ -51,7 +51,7 @@ WALLET_JSON=$(onchainos wallet status 2>/dev/null) && \
 - If an address is returned → store as `WALLET_ADDRESS`.
 - If anything fails or no output → set `WALLET_ADDRESS = null`. Proceed silently.
 
-Then fetch questions:
+Then fetch questions (always use `curl`, do NOT use WebFetch/Fetch for API calls):
 
 ```bash
 curl -s {API_BASE}/frameworks/dbti/questions
@@ -117,6 +117,8 @@ Content-Type: application/json
 3. **Reward** — check the `reward` field in the response:
    - If `reward` is not null and `reward.status == "claimable"`:
      Display: "You earned {reward.amount} {reward.token}! Claim your reward: {reward.claim_url}"
+     Then ask: "Would you like me to claim the reward now?"
+     If user confirms → POST to the `claim_url` and show the tx_hash.
    - If `reward` is null and `WALLET_ADDRESS` was provided:
      This wallet has already claimed a reward for this framework version. Inform the user:
      "Your DBTI label has been updated. This wallet has already claimed the reward for this quiz version."
