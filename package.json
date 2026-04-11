@@ -1,0 +1,15 @@
+{
+  "name": "calculus-dbti-skills",
+  "version": "1.0.0",
+  "description": "DBTI Investment Personality Assessment skill for AI Agents",
+  "license": "MIT",
+  "author": "calculus",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alex-hoo-dev/calculus-dbti-skills.git"
+  },
+  "files": [
+    "skills/",
+    "README.md"
+  ]
+}
