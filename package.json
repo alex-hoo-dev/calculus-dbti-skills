@@ -1,7 +1,7 @@
 {
   "name": "calculus-dbti-skills",
-  "version": "1.0.0",
-  "description": "DBTI Investment Personality Assessment skill for AI Agents",
+  "version": "2.0.0",
+  "description": "DBTI crypto personality test skill for AI Agents — 16 binary questions → 16 meme archetypes (HODL, APE, DEGEN, WHALE, BUILDER, etc.)",
   "license": "MIT",
   "author": "calculus",
   "repository": {
