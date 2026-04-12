@@ -57,5 +57,5 @@ The agent answers 16 questions itself (it is the subject being assessed, not a q
 
 ## Changelog
 
-- **2.0.0** — v3 format: 16 binary A/B questions + 16 meme archetypes. Replaces v1's 12-question Likert scale.
-- **1.0.0** — v1 format: 12 Likert-scale questions, 4-letter label only.
+- **2.0.0** — Binary A/B format: 16 scenario questions + 16 meme archetypes. Replaces the original 12-question Likert scale.
+- **1.0.0** — Initial release: 12 Likert-scale questions, 4-letter label only.
