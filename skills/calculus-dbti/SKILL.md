@@ -1,29 +1,29 @@
 ---
 name: calculus-dbti
-description: "Use this skill when the user or agent wants to take a DBTI personality assessment, do a trading personality quiz, get investment style label, DBTI test, 做题, DBTI测评, 投资人格测试, 交易风格测评, Agent人格标签, agent personality, investment personality test"
+description: "Use this skill when the user or agent wants to take a DBTI personality assessment, do a trading personality quiz, get investment style label, DBTI test, 做题, DBTI测评, 投资人格测试, 交易风格测评, Agent人格标签, agent personality, investment personality test, 币圈人格, crypto personality"
 license: MIT
 metadata:
   author: calculus
-  version: "1.0.0"
-  homepage: "https://github.com/user/calculus"
+  version: "2.0.0"
+  homepage: "https://github.com/alex-hoo-dev/calculus-dbti-skills"
 ---
 
-# DBTI Investment Personality Assessment
+# DBTI Crypto Personality Test
 
-Determine your trading personality across four dimensions and earn a DBTI label.
+Answer 16 binary scenario questions to discover which of the 16 crypto-native archetypes matches your trading style — HODL, APE, DEGEN, WHALE, BUILDER, and 11 others.
 
 ## Overview
 
-DBTI is an investment personality framework with four dimensions:
+DBTI sorts you along four crypto-native dimensions, then maps your 4-letter code to one of 16 meme archetypes.
 
-| Dimension | Negative Pole | Positive Pole |
-|-----------|--------------|---------------|
-| Risk Appetite | D — Defensive | d — Daring |
-| Time Horizon | B — Brief | b — Broad |
-| Decision Basis | T — Technical | t — Thematic |
-| Position Style | I — Intensive | i — Inclusive |
+| Dimension | Negative Pole (UPPER) | Positive Pole (lower) |
+|-----------|-----------------------|-----------------------|
+| Risk Appetite | `D` Defensive 🛡️ | `d` Daring 🎰 |
+| Time Horizon  | `B` Brief ⚡      | `b` Broad 🏔️ |
+| Decision Basis| `T` Technical 📊  | `t` Thematic 📣 |
+| Position Style| `I` Intensive 🎯  | `i` Inclusive 🌊 |
 
-After answering 12 questions, you receive a 4-letter label (e.g. `DbTi`) representing your investment personality.
+A 4-letter code like `dBtI` maps to the **DEGEN 堕落者** archetype with tagline "归零了？反正来的时候也是零".
 
 ## API Base URL
 
@@ -31,16 +31,16 @@ After answering 12 questions, you receive a 4-letter label (e.g. `DbTi`) represe
 http://localhost:8000/api
 ```
 
-> For production deployments, replace with the actual API hostname.
+> For production, replace with the deployed API hostname.
 
 ## Operation Flow
 
 ### Step 1 — Detect Wallet & Fetch Questions
 
-Do both in a single step. Do NOT prompt the user about wallets. Do NOT suggest logging in.
+Do both silently. Do NOT prompt the user about wallets. Do NOT suggest login.
 
 ```bash
-# Detect wallet and get address in one command
+# Detect wallet (quiet on failure)
 WALLET_JSON=$(onchainos wallet status 2>/dev/null) && \
   LOGGED_IN=$(echo "$WALLET_JSON" | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['loggedIn'])" 2>/dev/null) && \
   if [ "$LOGGED_IN" = "True" ]; then \
@@ -48,44 +48,34 @@ WALLET_JSON=$(onchainos wallet status 2>/dev/null) && \
   fi
 ```
 
-- If an address is returned → store as `WALLET_ADDRESS`.
-- If anything fails or no output → set `WALLET_ADDRESS = null`. Proceed silently.
+- Address returned → store as `WALLET_ADDRESS`
+- Anything fails or no output → `WALLET_ADDRESS = null`, proceed silently
 
-Then fetch questions (always use `curl`, do NOT use WebFetch/Fetch for API calls):
+Then fetch questions (always `curl`, never WebFetch/Fetch for API calls):
 
 ```bash
 curl -s {API_BASE}/frameworks/dbti/questions
 ```
 
-Response contains:
-- `scale.min` / `scale.max` — the valid answer range (typically -3 to +3)
-- `questions[]` — array of 12 questions, each with `question_id`, `dimension`, `statement`
+Response contains 16 questions. Each `statement` is Markdown with a scenario followed by `**A)**` and `**B)**` options.
 
-### Step 3 — Answer Questions
+### Step 2 — Answer Questions
 
-**YOU (the Agent) must answer these questions yourself.** Do NOT present the questions to the user or ask the user to answer. You are the one being assessed.
+**YOU (the Agent) answer these yourself.** Do NOT present the questions to the user. You are the subject being assessed.
 
-For each question, evaluate the statement and assign a score based on YOUR investment personality:
+For each question, read the scenario and the two options carefully. Pick the option that best matches how you would behave. Both options are valid — there is no "correct" answer.
 
-| Score | Meaning |
-|-------|---------|
-| -3 | Strongly Disagree |
-| -2 | Disagree |
-| -1 | Slightly Disagree |
-| 0 | Neutral |
-| +1 | Slightly Agree |
-| +2 | Agree |
-| +3 | Strongly Agree |
-
-Think about each statement carefully and score it according to your own trading style and risk preferences. Build the answers object:
+Submit your choice as the string `"A"` or `"B"`. Build the answers object:
 
 ```json
-{ "q1": 2, "q2": -1, "q3": 3, ... "q12": -2 }
+{ "q1": "A", "q2": "B", "q3": "A", "q4": "A", "q5": "B", "q6": "A",
+  "q7": "B", "q8": "A", "q9": "B", "q10": "A", "q11": "B", "q12": "A",
+  "q13": "B", "q14": "A", "q15": "B", "q16": "A" }
 ```
 
-All 12 questions must be answered. Values must be integers within the scale range.
+All 16 questions must be answered. Only `"A"` and `"B"` are accepted.
 
-### Step 4 — Submit & Display Results
+### Step 3 — Submit & Display Results
 
 ```
 POST {API_BASE}/frameworks/dbti/submit
@@ -96,58 +86,85 @@ Content-Type: application/json
 
 ```json
 {
-  "answers": { "q1": 2, "q2": -1, ... },
+  "answers": { "q1": "A", "q2": "B", ... },
   "wallet_address": "<WALLET_ADDRESS or omit if null>",
   "agent_name": "<your chosen name>"
 }
 ```
 
 - If `WALLET_ADDRESS` is null, omit the `wallet_address` field entirely.
-- `agent_name` is optional — use your name or identifier if you have one.
+- `agent_name` is optional.
 
-**Display the results to the user:**
+**Response fields:**
 
-1. **DBTI Label** — show prominently (e.g. `Your DBTI type is: DbTi`)
+- `label` — 4-letter code like `"dBtI"`
+- `archetype.code` — archetype handle like `"DEGEN"`
+- `archetype.name_cn` — Chinese name like `"堕落者"`
+- `archetype.tagline` — signature quote
+- `scores` — per-dimension score + pole + name
+- `reward` — claimable reward info (if wallet provided)
 
-2. **Dimension Breakdown** — for each dimension in `scores`, show:
-   - Dimension name
-   - Score value
-   - Which pole was selected (e.g. "Defensive" or "Daring")
+**Display to the user:**
 
-3. **Reward** — check the `reward` field in the response:
-   - If `reward` is not null and `reward.status == "claimable"`:
-     Display: "You earned {reward.amount} {reward.token}! Claim your reward: {reward.claim_url}"
-     Then ask: "Would you like me to claim the reward now?"
-     If user confirms → POST to the `claim_url` and show the tx_hash.
-   - If `reward` is null and `WALLET_ADDRESS` was provided:
-     This wallet has already claimed a reward for this framework version. Inform the user:
-     "Your DBTI label has been updated. This wallet has already claimed the reward for this quiz version."
-   - If `reward` is null and `WALLET_ADDRESS` was null:
-     Do not mention rewards at all. Only show the label and scores.
+1. **Archetype headline** — show prominently:
+   ```
+   🎰 你是币圈的 DEGEN（堕落者）
+   「归零了？反正来的时候也是零」
+   DBTI code: dBtI
+   ```
+
+2. **Dimension breakdown** — for each dimension in `scores`, show the selected pole and a short explanation (see Scoring Guide below).
+
+3. **Reward handling:**
+   - `reward.status == "claimable"` → Display: "You earned {amount} {token}! Claim: {claim_url}" and ask: "Would you like me to claim it now?" On confirm → POST to the claim_url.
+   - `reward == null` AND `wallet_address` was provided → This wallet has already claimed a reward for this framework version. Inform: "Your label is updated. This wallet has already claimed the reward for this quiz version."
+   - `reward == null` AND `wallet_address` was null → Do NOT mention rewards. Only show the archetype and scores.
+
+## The 16 Archetypes
+
+| Code | Archetype | Name | Tagline |
+|------|-----------|------|---------|
+| dbti | SHILL | 喊单王 | 我不是在 shill，是在做市场教育 |
+| dbtI | MAXI | 信仰者 | 其他链？那是证券 |
+| dbTi | NERD | 科学家 | 如果你不能量化它，你就不理解它 |
+| dbTI | WHALE | 巨鲸 | 你看到的支撑位是我画的 |
+| dBti | APE | 梭哈猿 | 白皮书？能吃吗？ |
+| dBtI | DEGEN | 堕落者 | 归零了？反正来的时候也是零 |
+| dBTi | FLIP | 倒爷 | 持有四小时已经算长线了 |
+| dBTI | ALPHA | 猎手 | 你在 Twitter 上看到的已经不是 alpha 了 |
+| Dbti | HODL | 钻石手 | 我的止损是归零 |
+| DbtI | BAG | 站岗者 | 不卖就不亏 |
+| DbTi | GHOST | 潜水者 | 沉默是最好的 alpha |
+| DbTI | BUILDER | 建设者 | Bear market is for building |
+| DBti | NPC | 路人甲 | 我就买了一点玩玩 |
+| DBtI | PAPER | 纸手 | 又卖飞了，今天第三次 |
+| DBTi | FARMER | 撸毛党 | 我不看好也不看空，我只看它发不发币 |
+| DBTI | FOMO | 追高侠 | 又涨了？今天不买明天来不及了 |
 
 ## Scoring Guide
 
-Each letter in the DBTI label represents one dimension:
+Each dimension letter explained:
 
-- **D** (Defensive): prefers capital preservation, avoids high-risk trades
-- **d** (Daring): embraces volatility, willing to take significant risk for upside
-- **B** (Brief): short-term trader, opens and closes positions within hours/days
-- **b** (Broad): long-term holder, comfortable riding out short-term fluctuations
-- **T** (Technical): decisions driven by on-chain data, charts, and quantitative signals
-- **t** (Thematic): decisions driven by narratives, community sentiment, and macro trends
-- **I** (Intensive): concentrated portfolio, few high-conviction positions
-- **i** (Inclusive): diversified portfolio, risk spread across many positions
+- **D** Defensive: capital preservation, avoids high-risk trades
+- **d** Daring: embraces volatility, takes significant upside risk
+- **B** Brief: short-term trader, positions closed in hours or days
+- **b** Broad: long-term holder, rides out short-term fluctuations
+- **T** Technical: on-chain data, charts, quantitative signals
+- **t** Thematic: narratives, community sentiment, macro trends
+- **I** Intensive: concentrated portfolio, few high-conviction positions
+- **i** Inclusive: diversified portfolio, risk spread across many
 
 ## Edge Cases
 
-- **API unreachable**: Inform the user the assessment service is unavailable. Do not retry more than once.
-- **onchainos not installed**: Proceed without wallet detection — quiz works without rewards.
-- **wallet status fails**: Treat as no wallet. Proceed silently.
-- **Submit returns 422**: Check error detail — likely missing answers or values out of range. Fix and retry.
-- **Reward already claimed**: If `reward` is null despite providing `wallet_address`, it means this wallet has already been rewarded for this framework version. Inform the user their label is updated but no additional reward is available.
+- **API unreachable** → inform the user the service is unavailable. Do not retry more than once.
+- **onchainos not installed** → proceed without wallet detection. Quiz works without rewards.
+- **wallet status fails** → treat as no wallet. Proceed silently.
+- **Submit 422 (missing answers)** → fix and retry; ensure all 16 keys `q1`..`q16` present.
+- **Submit 422 (invalid value)** → only `"A"` and `"B"` are accepted (uppercase, as strings).
+- **Reward already claimed** → if `reward` is null despite providing `wallet_address`, this wallet has already been rewarded for this framework version.
 
 ## Skill Routing
 
-- For wallet operations (login, balance, send) → use `okx-agentic-wallet`
-- For token prices and market data → use `okx-dex-market`
-- For security scanning → use `okx-security`
+- Wallet operations (login, balance, send) → `okx-agentic-wallet`
+- Token prices and market data → `okx-dex-market`
+- Security scanning → `okx-security`
