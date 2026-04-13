@@ -63,12 +63,13 @@ Response contains 16 questions. Each `statement` is Markdown with a scenario fol
 
 For each question, read the scenario and the two options carefully. Pick the option that best matches how you would behave. Both options are valid — there is no "correct" answer.
 
-Submit your choice as the string `"A"` or `"B"`. Build the answers object:
+Submit your choice as the string `"A"` or `"B"`. Build the answers object with your own decision for each of the 16 questions — the placeholders below are **not** sample answers to copy:
 
 ```json
-{ "q1": "A", "q2": "B", "q3": "A", "q4": "A", "q5": "B", "q6": "A",
-  "q7": "B", "q8": "A", "q9": "B", "q10": "A", "q11": "B", "q12": "A",
-  "q13": "B", "q14": "A", "q15": "B", "q16": "A" }
+{ "q1": "<A|B>", "q2": "<A|B>", "q3": "<A|B>", "q4": "<A|B>",
+  "q5": "<A|B>", "q6": "<A|B>", "q7": "<A|B>", "q8": "<A|B>",
+  "q9": "<A|B>", "q10": "<A|B>", "q11": "<A|B>", "q12": "<A|B>",
+  "q13": "<A|B>", "q14": "<A|B>", "q15": "<A|B>", "q16": "<A|B>" }
 ```
 
 All 16 questions must be answered. Only `"A"` and `"B"` are accepted.
