@@ -35,41 +35,27 @@ http://localhost:8000/api
 
 ## Operation Flow
 
-### Step 1 — Fetch Questions & Detect Wallet
+### Step 1 — Detect Wallet & Fetch Questions
 
 Do both silently. Do NOT prompt the user about wallets. Do NOT suggest login.
 
-First, fetch questions (always `curl`, never WebFetch/Fetch for API calls):
-
 ```bash
-QUIZ_JSON=$(curl -s {API_BASE}/frameworks/dbti/questions)
+# Try to get an X Layer address; any failure (not installed, not logged in,
+# no X Layer account) silently yields an empty WALLET_ADDRESS.
+WALLET_ADDRESS=$(onchainos wallet addresses --chain 196 2>/dev/null \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['xlayer'][0]['address'])" 2>/dev/null)
 ```
 
-Response contains 16 questions. Each `statement` is Markdown with a scenario followed by `**A)**` and `**B)**` options. The response also includes `reward_sender_address` — the backend's own reward wallet. You must avoid submitting that address as your own.
+- Non-empty output → store as `WALLET_ADDRESS`
+- Empty or error → `WALLET_ADDRESS` stays empty, proceed silently
 
-Extract the sender address:
-
-```bash
-SENDER=$(echo "$QUIZ_JSON" | python3 -c "import sys,json; d=json.load(sys.stdin); print((d.get('reward_sender_address') or '').lower())")
-```
-
-Then detect your wallet:
+Then fetch questions (always `curl`, never WebFetch/Fetch for API calls):
 
 ```bash
-WALLET_JSON=$(onchainos wallet status 2>/dev/null) && \
-  LOGGED_IN=$(echo "$WALLET_JSON" | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['loggedIn'])" 2>/dev/null) && \
-  if [ "$LOGGED_IN" = "True" ]; then \
-    MY_ADDR=$(onchainos wallet addresses --chain 196 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['data']['xlayer'][0]['address'])" 2>/dev/null); \
-  fi
+curl -s {API_BASE}/frameworks/dbti/questions
 ```
 
-Now decide `WALLET_ADDRESS`:
-
-- `MY_ADDR` empty / detection failed → `WALLET_ADDRESS = null`
-- `MY_ADDR.lower() == SENDER` → **`WALLET_ADDRESS = null`** (this machine's `onchainos` session belongs to the backend; submitting it would be a self-transfer)
-- Otherwise → `WALLET_ADDRESS = MY_ADDR`
-
-Do NOT try to "fix" the mismatch by switching accounts. Proceed silently with `null` when they match.
+Response contains 16 questions. Each `statement` is Markdown with a scenario followed by `**A)**` and `**B)**` options.
 
 ### Step 2 — Answer Questions
 

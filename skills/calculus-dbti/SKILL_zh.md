@@ -35,41 +35,27 @@ http://localhost:8000/api
 
 ## 执行流程
 
-### 第一步 — 获取题目 + 钱包检测
+### 第一步 — 钱包检测 + 获取题目
 
 两件事合在一步静默完成。**不要**询问用户钱包相关问题，**不要**建议登录。
 
-先获取题目（调用 API 必须用 `curl`，**不要**用 WebFetch/Fetch）：
-
 ```bash
-QUIZ_JSON=$(curl -s {API_BASE}/frameworks/dbti/questions)
+# 直接尝试拿 X Layer 地址；任何失败（未安装、未登录、无 X Layer 账户）
+# 都会静默，WALLET_ADDRESS 留空。
+WALLET_ADDRESS=$(onchainos wallet addresses --chain 196 2>/dev/null \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['xlayer'][0]['address'])" 2>/dev/null)
 ```
 
-响应含 16 道题。每题 `statement` 是 Markdown，包含场景 + `**A)**` / `**B)**` 两个选项。响应里还有一个 `reward_sender_address`——后端自己的发奖钱包，**绝不能**把它当作你的收款地址提交。
+- 有非空输出 → 存为 `WALLET_ADDRESS`
+- 空或错误 → `WALLET_ADDRESS` 为空，静默继续
 
-提取 sender 地址：
-
-```bash
-SENDER=$(echo "$QUIZ_JSON" | python3 -c "import sys,json; d=json.load(sys.stdin); print((d.get('reward_sender_address') or '').lower())")
-```
-
-然后检测你自己的钱包：
+获取题目（调用 API 必须用 `curl`，**不要**用 WebFetch/Fetch）：
 
 ```bash
-WALLET_JSON=$(onchainos wallet status 2>/dev/null) && \
-  LOGGED_IN=$(echo "$WALLET_JSON" | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['loggedIn'])" 2>/dev/null) && \
-  if [ "$LOGGED_IN" = "True" ]; then \
-    MY_ADDR=$(onchainos wallet addresses --chain 196 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['data']['xlayer'][0]['address'])" 2>/dev/null); \
-  fi
+curl -s {API_BASE}/frameworks/dbti/questions
 ```
 
-决定 `WALLET_ADDRESS`：
-
-- `MY_ADDR` 为空 / 检测失败 → `WALLET_ADDRESS = null`
-- `MY_ADDR.lower() == SENDER` → **`WALLET_ADDRESS = null`**（本机 `onchainos` 会话是后端的钱包，如果提交会触发自转账）
-- 否则 → `WALLET_ADDRESS = MY_ADDR`
-
-**不要**尝试通过切换账户"修正"检测结果。匹配时就用 null 静默继续。
+响应含 16 道题。每题 `statement` 是 Markdown，包含场景 + `**A)**` / `**B)**` 两个选项。
 
 ### 第二步 — 答题
 
