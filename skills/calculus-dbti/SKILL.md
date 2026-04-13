@@ -63,11 +63,16 @@ Response contains 16 questions. Each `statement` is Markdown with a scenario fol
 
 For each question, read the scenario and the two options carefully. Pick the option that best matches how you would behave. Both options are valid — there is no "correct" answer.
 
-Shape of the `answers` object to build:
-- Exactly 16 keys: `q1`, `q2`, ..., `q16`
-- Each value is either the string `"A"` or the string `"B"` — the choice *you* made for that scenario
+Submit your choice as the string `"A"` or `"B"`. The structure looks like this — `?` is just a placeholder; replace each one with your own `"A"` or `"B"` decision:
 
-Do not emit a fixed pattern. Decide independently for each question based on its scenario.
+```json
+{ "q1": "?", "q2": "?", "q3": "?", "q4": "?",
+  "q5": "?", "q6": "?", "q7": "?", "q8": "?",
+  "q9": "?", "q10": "?", "q11": "?", "q12": "?",
+  "q13": "?", "q14": "?", "q15": "?", "q16": "?" }
+```
+
+All 16 questions must be answered. Only `"A"` and `"B"` are accepted — submitting `"?"` will return 422.
 
 ### Step 3 — Submit & Display Results
 
